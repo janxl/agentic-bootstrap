@@ -8,7 +8,8 @@ and document search.
 ## 1. Install
 
 **Requirements:** Docker, `kubectl`, `make`, `curl`, Python 3.11+, and a Kubernetes cluster. About
-6 GB of free memory for the local model. Linux and macOS work directly; on Windows use WSL2.
+6 GB of free memory for the local model. It runs on the CPU, so no GPU is needed (or used). Linux and
+macOS work directly; on Windows use WSL2.
 
 > **Note:** only tested on WSL2 with k3s. The other clusters below are supported by the scripts but
 > have not been verified yet.
@@ -19,25 +20,9 @@ and document search.
 - **kind / minikube / k3d:** `kind create cluster`, `minikube start` or `k3d cluster create`.
 - **k3s on Linux:** `curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644`, then
   `mkdir -p ~/.kube && cp /etc/rancher/k3s/k3s.yaml ~/.kube/config`.
+- **Windows (WSL2):** follow [Windows (WSL2) setup](docs/wsl2.md) (a one-time WSL setting, and Docker
+  reachable from WSL).
 - **A remote cluster:** point `kubectl` at it and use `REGISTRY=ghcr.io/you` in the `make up` step below.
-
-<details>
-<summary>Windows (WSL2) setup</summary>
-
-Add this to `%UserProfile%\.wslconfig`, run `wsl --shutdown` in PowerShell, reopen WSL, and then
-install k3s inside WSL:
-
-```ini
-[wsl2]
-kernelCommandLine = cgroup_no_v1=all
-memory=10GB
-```
-
-```bash
-bash scripts/setup-wsl.sh
-```
-
-</details>
 
 **Deploy:**
 

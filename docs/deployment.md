@@ -22,7 +22,7 @@ manifests are in `k8s/`.
 | `agent` | built from `agent/` | The agent loop ([The agent](agent.md)) |
 | `mcp-tools` | built from `mcp-tools/` | The tools, including document search ([The MCP server](mcp-server.md)) |
 | `qdrant` | `qdrant/qdrant` | The vector database ([Document search](document-search.md)) |
-| `ollama` | `ollama/ollama` | Runs the local models: embeddings always, chat optionally ([Model choice](model-choice.md)) |
+| `ollama` | `ollama/ollama` | Runs the local models on the CPU: embeddings always, chat optionally ([Model choice](model-choice.md)) |
 | `ingest` | built from `ingest/` | A job, not a service: `make ingest` runs it to index the documents |
 
 The four images built from this repo are made by `make up` and loaded into the cluster. On k3s, kind,

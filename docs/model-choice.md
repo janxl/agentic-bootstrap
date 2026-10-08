@@ -45,7 +45,12 @@ The default is `qwen3:4b-instruct`: small enough for a laptop, and able to call 
 spends most of its output on long hidden thinking, which is slow on a CPU and uses up the limited
 context window.
 
-Ollama runs it on the CPU. Settings in `k8s/ollama.yaml`:
+**CPU only.** The deployment does not request a GPU, so both the chat model and the embeddings run on
+the CPU. That is why answers take seconds and indexing takes minutes. Ollama can use a GPU if your
+cluster exposes one to the pod, but that needs cluster setup and an edit to `k8s/ollama.yaml`, and it
+is not covered or tested here.
+
+Settings in `k8s/ollama.yaml`:
 
 - `OLLAMA_CONTEXT_LENGTH` (8192): how much text the model can read at once.
 - `OLLAMA_KEEP_ALIVE` (30 minutes): how long it stays in memory after use. The first answer after that
@@ -68,4 +73,4 @@ Vectors from different models cannot be compared, so every document has to be em
 
 ---
 
-← Previous: [Deployment](deployment.md)
+← Previous: [Deployment](deployment.md) · Next: [Windows (WSL2) setup](wsl2.md)

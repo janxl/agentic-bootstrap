@@ -57,3 +57,8 @@ restart. `make up` builds the images and deploys the lot, and it is safe to run 
 
 The chat model is either Claude or a small local model, switched with one command; a separate local
 embedding model powers document search either way. The page compares the two and says how to change them.
+
+### [Windows (WSL2) setup](docs/wsl2.md)
+
+Getting k3s and Docker working inside WSL2: the one-time cgroup setting (and how to undo it), systemd,
+Docker, and fixes for the usual first-install problems.

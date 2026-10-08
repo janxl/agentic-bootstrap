@@ -6,7 +6,7 @@ Most of these are called by `make`; you rarely run them directly. `make help` li
 
 | Script | Used by | What it does |
 |---|---|---|
-| `doctor.sh` | `make doctor` | Checks the machine is ready: tools, Python version, cluster, default storage class, memory, cgroup version. Says how to fix what is missing. |
+| `doctor.sh` | `make doctor` | Checks the machine is ready: tools (Docker first), Python version, systemd and cgroups on WSL, memory, the cluster and its default storage class. Every failure comes with the next step; WSL-specific hints appear only when WSL is detected. |
 | `build.sh` | `make up` | Builds the four images (agent, gateway, mcp-tools, ingest) and hands them to `load-images.sh`. |
 | `load-images.sh` | `build.sh` | Gets the built images to the cluster, whichever kind it is: k3s, kind, k3d, minikube, Docker Desktop, or a registry. `--detect` prints which one it found. |
 | `apply.sh` | `make up`, `ingest` | Applies manifests, pointing the image names at the registry and tag in use (no change for local clusters). |
@@ -31,7 +31,7 @@ Most of these are called by `make`; you rarely run them directly. `make help` li
 
 | Script | What it does |
 |---|---|
-| `setup-wsl.sh` | Optional. Installs Docker and a single-node k3s inside WSL2 (after the `.wslconfig` change in the README). |
+| `setup-wsl.sh` | Optional. Installs Docker and a single-node k3s inside WSL2 (see [docs/wsl2.md](../docs/wsl2.md) for the steps around it). |
 | `search.sh "question" [top_k] [--full]` | Runs a document search and prints one line per hit (source, page, score), or the full passages with `--full`. For checking what retrieval returns. |
 | `show-prompt.sh` | Prints the system prompt and the `search_documents` description exactly as the agent has them. |
 | `qdrant-count.sh [collection]` | Shows how many chunks are indexed, per document. |

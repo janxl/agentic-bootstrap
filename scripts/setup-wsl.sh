@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # OPTIONAL one-time setup for a single-node k3s inside WSL2 Ubuntu (needs sudo).
 # Anywhere else, use your own cluster: k3s, kind, minikube, Docker Desktop, or a remote one.
-# Run: bash scripts/setup-wsl.sh        (read README.md, "WSL2 notes", first)
+# Run: bash scripts/setup-wsl.sh        (read docs/wsl2.md first)
 set -euo pipefail
 
 # WSL2 kernels default to cgroup v1, which current k3s refuses to run on. Check before installing.
