@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qdrant-storage
+  namespace: agentic
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qdrant
+  namespace: agentic
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # single RWO volume
+  selector:
+    matchLabels: {app: qdrant}
+  template:
+    metadata:
+      labels: {app: qdrant}
+    spec:
+      containers:
+        - name: qdrant
+          image: qdrant/qdrant:latest
+          imagePullPolicy: IfNotPresent  # :latest defaults to Always; don't re-pull on every restart
+          ports:
+            - name: http
+              containerPort: 6333
+            - name: grpc
+              containerPort: 6334
+          resources:
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: storage
+              mountPath: /qdrant/storage
+          readinessProbe:
+            httpGet: {path: /readyz, port: 6333}
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: qdrant-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  namespace: agentic
+spec:
+  selector: {app: qdrant}
+  ports:
+    - name: http
+      port: 6333
+    - name: grpc
+      port: 6334

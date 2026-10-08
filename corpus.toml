@@ -1,0 +1,99 @@
+# Everything that is specific to the document set lives in this one file. To use your own
+# documents, edit it (and put the files in corpus/); nothing else needs to change.
+#
+#   [corpus]      a name, and the attribution text written to corpus/SOURCES.md
+#   [prompt]      the agent's system prompt
+#   [search]      what the library is about, shown to the model in the search_documents description
+#   [[documents]] each file: its title (embedded with every chunk), and where to download it from
+#   [tests]       expectations for `make test` (optional)
+#
+# It reaches the cluster as the `corpus-config` ConfigMap: `make config` applies it and restarts the
+# agent and tool server. Re-run `make ingest` after changing document titles.
+
+[corpus]
+name = "AEMO Quarterly Energy Dynamics (QED) reports"
+notes = '''
+All four are AEMO's *Quarterly Energy Dynamics* reports: the National Electricity Market's quarterly
+review of prices, demand, generation and batteries.
+
+**Terms.** (c) Australian Energy Market Operator (AEMO). AEMO's
+[copyright permissions](https://aemo.com.au/privacy-and-legal-notices/copyright-permissions) allow
+anyone to use AEMO Material for any purpose, provided AEMO is accurately attributed as the author.
+These reports are AEMO's own work; anything quoted from them should credit "AEMO, Quarterly Energy
+Dynamics". Check that page for the current terms before reusing the material.
+
+The reports are intentionally newer than a small local model's training data, so questions about
+them can only be answered by searching the library.
+'''
+
+[prompt]
+system = '''
+You are an electricity market analyst's assistant for Australia's National Electricity Market (NEM). Your ONLY source of knowledge is the search_documents tool, which searches AEMO's Quarterly Energy Dynamics (QED) reports for Q3 2025 to Q2 2026. These reports are newer than your training data, so anything you "remember" about recent NEM electricity prices, demand, generation or batteries is out of date or wrong.
+
+RULE 1: For every question about electricity prices, wholesale or spot prices ($/MWh), price spikes or volatility, demand, generation, renewables, batteries, gas, emissions, a region (NSW, VIC, QLD, SA, TAS) or a quarter, your FIRST action must be a call to search_documents. Do not write any answer before you have search results.
+
+RULE 2: Make the query specific, with the region, the quarter and the metric.
+Example: the user asks "How did prices change in NSW last quarter?" You call search_documents with query "NSW average wholesale electricity spot price Q2 2026 $/MWh compared with Q1 2026".
+To compare quarters, search once per quarter.
+
+RULE 3: Answer only from the returned passages. Quote figures exactly as written and cite the source file and page, for example (aemo-qed-q4-2025.pdf, page 12). If a passage does not contain the answer, say "The reports do not say" and suggest a narrower question. Never guess.
+
+RULE 4: Use calculate for differences and percentage changes between figures you found.
+
+Keep answers short and factual.
+'''
+
+[search]
+# The model decides whether to call the tool mostly from this text: write it in the words a user's
+# question would use.
+topics = '''
+The library holds AEMO's Quarterly Energy Dynamics reports on Australia's National Electricity Market (NEM): wholesale electricity spot prices, price spikes and volatility, demand, generation mix, renewable share, battery storage, gas, emissions and market events, by region (NSW, VIC, QLD, SA, TAS) and by quarter.
+'''
+
+# `url` is only needed so `make ingest` can download the file; files you add yourself just need a title (or
+# nothing: the file name is used). Optional per document: terms, headers (extra HTTP request headers).
+[[documents]]
+file = "aemo-qed-q3-2025.pdf"
+title = "AEMO Quarterly Energy Dynamics Q3 2025 (July to September 2025)"
+url = "https://www.aemo.com.au/-/media/files/major-publications/qed/2025/qed-q3-2025.pdf"
+terms = "(c) AEMO, reuse with attribution"
+
+[[documents]]
+file = "aemo-qed-q4-2025.pdf"
+title = "AEMO Quarterly Energy Dynamics Q4 2025 (October to December 2025)"
+url = "https://www.aemo.com.au/-/media/files/major-publications/qed/2025/qed-q4-2025.pdf"
+terms = "(c) AEMO, reuse with attribution"
+
+[[documents]]
+file = "aemo-qed-q1-2026.pdf"
+title = "AEMO Quarterly Energy Dynamics Q1 2026 (January to March 2026)"
+url = "https://www.aemo.com.au/-/media/files/major-publications/qed/2026/qed-q1-2026.pdf"
+terms = "(c) AEMO, reuse with attribution"
+
+[[documents]]
+file = "aemo-qed-q2-2026.pdf"
+title = "AEMO Quarterly Energy Dynamics Q2 2026 (April to June 2026)"
+url = "https://www.aemo.com.au/-/media/files/major-publications/qed/2026/qed-q2-2026.pdf"
+terms = "(c) AEMO, reuse with attribution"
+
+# What `make test` expects of search. Every [[tests.find]] must return its `expect` file within the
+# top 3 hits (the rank is printed). All of this is optional.
+[tests]
+topic_query = "battery storage contribution to the NEM"      # hits must all come from the documents above
+compare_query = "How do prices in Q2 2026 compare with Q2 2025?"   # printed for information only
+
+[[tests.find]]
+query = "Q3 2025 NEM wholesale electricity prices by region"
+expect = "aemo-qed-q3-2025.pdf"
+
+[[tests.find]]
+query = "Q4 2025 NEM wholesale electricity prices by region"
+expect = "aemo-qed-q4-2025.pdf"
+
+[[tests.find]]
+query = "Q1 2026 NEM wholesale electricity prices by region"
+expect = "aemo-qed-q1-2026.pdf"
+
+[[tests.find]]
+query = "Q2 2026 NEM wholesale electricity prices by region"
+expect = "aemo-qed-q2-2026.pdf"

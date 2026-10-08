@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Agent</title>
+<style>
+  body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+  #log { border: 1px solid #ccc; height: 60vh; overflow-y: auto; padding: .5rem; white-space: pre-wrap; }
+  .user { color: #06c; margin: .5rem 0; }
+  .agent { margin: .5rem 0; }
+  form { display: flex; gap: .5rem; margin-top: .5rem; }
+  input { flex: 1; padding: .5rem; }
+</style>
+</head>
+<body>
+<div id="log"></div>
+<form id="f"><input id="m" autocomplete="off" autofocus><button>Send</button><button type="button" id="new">New chat</button></form>
+<script>
+// randomUUID is only available in secure contexts (https/localhost)
+function newId() {
+  return crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+// Keep the session id in the browser so a reload (or an agent restart) resumes the same chat.
+let sid;
+try { sid = localStorage.getItem('sid'); } catch (e) {}
+if (!sid) {
+  sid = newId();
+  try { localStorage.setItem('sid', sid); } catch (e) {}
+}
+const log = document.getElementById('log');
+const input = document.getElementById('m');
+function add(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls; d.textContent = text;
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+  return d;
+}
+// Restore the conversation stored on the server for this session.
+fetch('/history/' + encodeURIComponent(sid))
+  .then(r => r.ok ? r.json() : { messages: [] })
+  .then(h => h.messages.forEach(m => add(m.role === 'user' ? 'user' : 'agent',
+    (m.role === 'user' ? 'You: ' : 'Agent: ') + m.text)))
+  .catch(() => {});
+
+document.getElementById('new').onclick = () => {
+  sid = newId();
+  try { localStorage.setItem('sid', sid); } catch (e) {}
+  log.textContent = '';
+  input.focus();
+};
+
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault();
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = '';
+  add('user', 'You: ' + message);
+  const pending = add('agent', 'Thinking... 0s');
+  const t0 = Date.now();
+  const timer = setInterval(() => {
+    pending.textContent = 'Thinking... ' + Math.round((Date.now() - t0) / 1000) + 's';
+  }, 1000);
+  try {
+    const r = await fetch('/chat', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({session_id: sid, message})
+    });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      throw new Error(body.detail || r.status);
+    }
+    const secs = Math.round((Date.now() - t0) / 1000);
+    pending.textContent = 'Agent (' + secs + 's): ' + (await r.json()).reply;
+  } catch (err) {
+    pending.textContent = 'Error: ' + err.message;
+  } finally {
+    clearInterval(timer);
+  }
+};
+</script>
+</body>
+</html>

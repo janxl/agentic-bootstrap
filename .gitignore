@@ -1,0 +1,13 @@
+# Real API key: never commit. Use secret.example.yaml as the template.
+secret.yaml
+
+# Demo corpus is downloaded from the original sources by scripts/download_corpus.py.
+# Not redistributed from this repo; only SOURCES.md is tracked.
+corpus/*
+!corpus/SOURCES.md
+
+# Image tag remembered between `make` runs when pushing to a registry
+.build-tag
+
+__pycache__/
+*.pyc

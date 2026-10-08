@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agent-data
+  namespace: agentic
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent
+  namespace: agentic
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # one SQLite writer on a single RWO volume: never two agent pods at once
+  selector:
+    matchLabels: {app: agent}
+  template:
+    metadata:
+      labels: {app: agent}
+    spec:
+      containers:
+        - name: agent
+          image: agentic/agent:dev
+          ports:
+            - containerPort: 8000
+          env:
+            - name: LOG_LLM       # full LLM request/response JSON: "true" / "false"
+              value: "true"
+            - name: ACCESS_LOG    # uvicorn "POST /chat 200 OK" lines: "true" / "false"
+              value: "true"
+            - name: MCP_URL       # tool server (streamable HTTP)
+              value: http://mcp-tools:8000/mcp
+            - name: DB_PATH       # conversation history (SQLite on the agent-data volume)
+              value: /data/agent.db
+            - name: MAX_CONTEXT_MESSAGES  # most recent messages sent to the model; all are stored
+              value: "24"
+            - name: CORPUS_CONFIG  # system prompt comes from [prompt] in corpus.toml
+              value: /config/corpus.toml
+            - name: ANTHROPIC_API_KEY  # only needed for Claude; the local model works without it
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic  # must match metadata.name in secret.yaml
+                  key: ANTHROPIC_KEY
+                  optional: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /config
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8000}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: agent-data
+        - name: config
+          configMap:
+            name: corpus-config  # made from corpus.toml by `make config`
+            optional: true       # the agent still starts (with a generic prompt) without it
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent
+  namespace: agentic
+spec:
+  selector: {app: agent}
+  ports:
+    - port: 8000

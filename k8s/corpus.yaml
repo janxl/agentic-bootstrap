@@ -1,0 +1,13 @@
+# Where the documents to ingest live inside the cluster. `make ingest` copies ./corpus/ into this
+# volume (scripts/upload-corpus.sh), then runs the ingest job, which mounts it read-only.
+# A PVC (not a host path) so it works the same on k3s, kind, minikube and managed clusters.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: corpus
+  namespace: agentic
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 512Mi

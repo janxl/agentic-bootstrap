@@ -1,0 +1,48 @@
+# One-off ingestion run: `make ingest` copies ./corpus into the `corpus` volume and re-creates this
+# Job. The pod spec can be pasted into a CronJob's jobTemplate unchanged, since the ingestion is
+# idempotent (new, changed and deleted files are reconciled; unchanged ones are skipped).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest
+  namespace: agentic
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: ingest
+          image: agentic/ingest:dev
+          env:
+            - name: CORPUS_DIR
+              value: /corpus
+            - name: CORPUS_CONFIG  # document titles come from [[documents]] in corpus.toml
+              value: /config/corpus.toml
+            - name: QDRANT_URL
+              value: http://qdrant:6333
+            - name: OLLAMA_URL
+              value: http://ollama:11434
+            - name: EMBED_MODEL
+              value: nomic-embed-text
+            - name: COLLECTION
+              value: documents_nomic_v1
+          resources:
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: corpus
+              mountPath: /corpus
+              readOnly: true
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: corpus
+          persistentVolumeClaim:
+            claimName: corpus
+            readOnly: true
+        - name: config
+          configMap:
+            name: corpus-config  # made from corpus.toml by `make config`
+            optional: true
