@@ -14,7 +14,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NS=agentic
 
 if [ -z "${KUBECTL:-}" ]; then
-  if command -v kubectl >/dev/null 2>&1; then
+  # A kubectl that is found but cannot run (for example Docker Desktop's link into /mnt/wsl, whose
+  # target is gone when Docker Desktop is stopped: "Input/output error") must not win.
+  if command -v kubectl >/dev/null 2>&1 && kubectl version --client >/dev/null 2>&1; then
     KUBECTL=kubectl
   elif command -v k3s >/dev/null 2>&1; then
     KUBECTL="k3s kubectl"

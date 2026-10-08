@@ -104,6 +104,14 @@ fi
 # ---------------------------------------------------------------- the cluster
 
 echo "Cluster"
+if command -v kubectl >/dev/null 2>&1 && ! kubectl version --client >/dev/null 2>&1; then
+  warn "the 'kubectl' on your PATH does not run ($(command -v kubectl)): it is being ignored"
+  if [ -n "$wsl" ]; then
+    hint "often Docker Desktop's link whose target is not mounted ('Input/output error'): check 'ls -l \$(command -v kubectl)'; start Docker Desktop, or remove the link: sudo rm \$(command -v kubectl)  (docs/wsl2.md)"
+  else
+    hint "reinstall kubectl, or remove the broken one from your PATH: https://kubernetes.io/docs/tasks/tools/"
+  fi
+fi
 if [ -z "${KUBECTL:-}" ]; then
   fail "kubectl not found"
   if [ -n "$wsl" ]; then

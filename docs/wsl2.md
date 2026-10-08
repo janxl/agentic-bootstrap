@@ -106,6 +106,13 @@ is not visible to Windows `localhost`, and a port-forward is.
 
 **`make doctor` says Docker is missing.** See [Docker inside WSL](#docker-inside-wsl).
 
+**`kubectl` fails with "Input/output error".** `ls -l $(command -v kubectl)` will probably show a link into
+`/mnt/wsl/docker-desktop/...`. That is Docker Desktop's WSL integration, and the link only works while
+Docker Desktop is running and integrated with this distro (and the distro is WSL 2). Either start Docker
+Desktop, or remove the dead link and use k3s's own: `sudo rm /usr/local/bin/kubectl && sudo ln -s
+/usr/local/bin/k3s /usr/local/bin/kubectl`. The scripts skip a `kubectl` that does not run and fall back
+to `k3s kubectl`, so `make` works either way; `export KUBECTL="k3s kubectl"` forces it.
+
 **I edited `.wslconfig` but nothing changed.** First see what the kernel actually started with:
 
 ```bash
